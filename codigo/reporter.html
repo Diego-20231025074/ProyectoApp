@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Reporte de Problemas de Movilidad</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+
+  <!-- Estilos -->
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+    }
+
+    header {
+      background-color: #0077b6;
+      color: white;
+      padding: 1rem;
+      text-align: center;
+    }
+
+    #map {
+      height: 90vh;
+      width: 100%;
+    }
+
+    textarea, select, button {
+      font-size: 0.9rem;
+      margin-top: 5px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h2>📍 Reporta un Problema de Movilidad</h2>
+  <p>Haz clic en el mapa, selecciona el tipo de problema y déjanos tu reporte</p>
+</header>
+
+<div id="map"></div>
+
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<script>
+  var map = L.map('map').setView([4.6282, -74.0657], 14);
+
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; OpenStreetMap'
+  }).addTo(map);
+
+  // Explicaciones por tipo
+  const explicaciones = {
+    'Buses': 'Problemas con rutas, paraderos mal ubicados o exceso de buses.',
+    'Carros': 'Congestión, parqueo indebido o intersecciones saturadas.',
+    'TransMilenio': 'Retrasos, colapso de estaciones o problemas de acceso.',
+    'Peatones': 'Cruces peligrosos, aceras dañadas o falta de señalización.',
+    'Bicicletas': 'Falta de ciclorrutas o invasión de carriles exclusivos.'
+  };
+
+  map.on('click', function (e) {
+    const latlng = e.latlng;
+
+    const popupContent = `
+      <b>¿Qué tipo de problema?</b><br>
+      <select id="tipo-problema" onchange="actualizarExplicacion()">
+        <option value="">-- Selecciona --</option>
+        <option value="Buses">Buses</option>
+        <option value="Carros">Carros</option>
+        <option value="TransMilenio">TransMilenio</option>
+        <option value="Peatones">Peatones</option>
+        <option value="Bicicletas">Bicicletas</option>
+      </select><br><br>
+
+      <div id="explicacion" style="font-size: 0.85rem; color: #333;"></div>
+      <br>
+      <textarea id="comentario" rows="3" cols="25" placeholder="Comentario opcional..."></textarea><br>
+      <button onclick="guardarReporte(${latlng.lat}, ${latlng.lng})">Guardar Reporte</button>
+    `;
+
+    const marker = L.marker(latlng).addTo(map).bindPopup(popupContent).openPopup();
+  });
+
+  // Mostrar explicación del tipo
+  window.actualizarExplicacion = function () {
+    const tipo = document.getElementById("tipo-problema").value;
+    const explicacion = explicaciones[tipo] || '';
+    document.getElementById("explicacion").innerText = explicacion;
+  };
+
+  // Guardar el reporte
+  window.guardarReporte = function (lat, lng) {
+    const tipo = document.getElementById("tipo-problema").value;
+    const comentario = document.getElementById("comentario").value.trim();
+
+    if (!tipo) {
+      alert("Por favor selecciona el tipo de problema.");
+      return;
+    }
+
+    const contenido = `<b>Tipo:</b> ${tipo}<br><b>Comentario:</b> ${comentario || 'Sin comentario.'}`;
+
+    const marcadorFinal = L.marker([lat, lng]).addTo(map);
+    marcadorFinal.bindPopup(contenido).openPopup();
+
+    console.log("Reporte guardado:", {
+      tipo,
+      comentario,
+      coordenadas: { lat, lng }
+    });
+  };
+</script>
+
+</body>
+</html>

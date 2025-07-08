@@ -35,27 +35,7 @@
 <!-- Leaflet JS -->
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
-<!-- Firebase SDK -->
-<script type="module">
-  // Importa Firebase desde módulos
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getDatabase, ref, push } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
-
-  // Tu configuración de Firebase (REEMPLAZA CON TU INFO REAL)
-  const firebaseConfig = {
-    apiKey: "TU_API_KEY",
-    authDomain: "TU_AUTH_DOMAIN",
-    databaseURL: "https://TU_PROJECT_ID.firebaseio.com",
-    projectId: "TU_PROJECT_ID",
-    storageBucket: "TU_BUCKET.appspot.com",
-    messagingSenderId: "TU_SENDER_ID",
-    appId: "TU_APP_ID"
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const database = getDatabase(app);
-
-  // === LÓGICA DEL MAPA ===
+<script>
   const map = L.map('map').setView([4.6282, -74.0657], 14);
   L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19
@@ -71,19 +51,21 @@
 
     if (polyline) map.removeLayer(polyline);
     polyline = L.polyline(puntosRuta, {
-      color: 'green', weight: 4, dashArray: '6,6'
+      color: 'green',
+      weight: 4,
+      dashArray: '6,6'
     }).addTo(map);
   });
 
-  window.borrarRuta = () => {
+  function borrarRuta() {
     puntosRuta = [];
     if (polyline) map.removeLayer(polyline);
     map.eachLayer(layer => {
       if (layer instanceof L.Marker) map.removeLayer(layer);
     });
-  };
+  }
 
-  window.guardarRuta = () => {
+  async function guardarRuta() {
     const usuario = document.getElementById("usuario").value.trim();
     if (!usuario) {
       alert("Por favor ingresa tu nombre.");
@@ -94,17 +76,32 @@
       return;
     }
 
-    const coords = puntosRuta.map(p => ({ lat: p.lat, lng: p.lng }));
+    const coords = puntosRuta.map(p => ({
+      lat: p.lat,
+      lng: p.lng
+    }));
 
-    push(ref(database, 'rutas'), {
-      usuario,
-      fecha: new Date().toISOString(),
-      coordenadas: coords
-    });
+    try {
+      const response = await fetch("http://localhost:5000/api/rutas", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          usuario: usuario,
+          coordenadas: coords
+        })
+      });
 
-    alert("✅ Ruta guardada correctamente.");
-    borrarRuta();
-  };
+      const data = await response.json();
+      alert(data.mensaje);
+      borrarRuta();
+
+    } catch (error) {
+      console.error(error);
+      alert("Ocurrió un error al guardar la ruta.");
+    }
+  }
 </script>
 
 </body>

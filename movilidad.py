@@ -1,7 +1,8 @@
-from flask import Flask, jsonify, request, render_template
+from flask import Flask, jsonify, request
 import psycopg2
 import psycopg2.extras
 from flask_cors import CORS
+import json
 
 app = Flask(__name__)
 CORS(app)  # habilitar CORS para permitir llamadas desde el HTML
@@ -26,11 +27,14 @@ def obtener_conexion():
 
 @app.route("/")
 def index():
-    # esto sirve si quieres renderizar plantillas, pero si solo abres el HTML local, no es necesario
-    return "Backend en funcionamiento."
+    return "✅ Backend en funcionamiento."
 
 
-# ✅ Ruta para consultar todos los sitios (GET)
+# ==========================================
+# ✅ Rutas para SITIOS
+# ==========================================
+
+# GET → consultar todos los sitios
 @app.route("/api/sitios", methods=["GET"])
 def obtener_sitios():
     conn = obtener_conexion()
@@ -55,7 +59,7 @@ def obtener_sitios():
     return jsonify(sitios)
 
 
-# ✅ Ruta para insertar un sitio nuevo (POST)
+# POST → insertar un nuevo sitio
 @app.route("/api/sitios", methods=["POST"])
 def crear_sitio():
     data = request.get_json()
@@ -80,5 +84,58 @@ def crear_sitio():
     return jsonify({"mensaje": "Sitio creado exitosamente."})
 
 
+# ==========================================
+# ✅ Rutas para RUTAS
+# ==========================================
+
+# POST → insertar una nueva ruta
+@app.route("/api/rutas", methods=["POST"])
+def crear_ruta():
+    data = request.get_json()
+
+    usuario = data.get("usuario")
+    coordenadas = data.get("coordenadas")
+
+    conn = obtener_conexion()
+    cur = conn.cursor()
+
+    # Guardar coordenadas como JSON
+    cur.execute("""
+        INSERT INTO rutas (usuario, coordenadas)
+        VALUES (%s, %s)
+    """, (usuario, json.dumps(coordenadas)))
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return jsonify({"mensaje": "Ruta guardada correctamente."})
+
+
+# GET → consultar todas las rutas
+@app.route("/api/rutas", methods=["GET"])
+def obtener_rutas():
+    conn = obtener_conexion()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+    cur.execute("SELECT * FROM rutas;")
+    rows = cur.fetchall()
+
+    rutas = []
+    for row in rows:
+        rutas.append({
+            "id": row["id"],
+            "usuario": row["usuario"],
+            "fecha": row["fecha"].isoformat() if row["fecha"] else None,
+            "coordenadas": row["coordenadas"]
+        })
+
+    cur.close()
+    conn.close()
+
+    return jsonify(rutas)
+
+
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
+

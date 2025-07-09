@@ -191,6 +191,59 @@ def obtener_reportes():
     return jsonify(reportes)
 
 
+# ==========================================
+# ✅ RUTAS PARA PROPUESTAS
+# ==========================================
+
+# POST → insertar propuesta
+@app.route("/api/propuestas", methods=["POST"])
+def crear_propuesta():
+    data = request.get_json()
+
+    usuario = data.get("usuario")
+    titulo = data.get("titulo")
+    descripcion = data.get("descripcion")
+
+    conn = obtener_conexion()
+    cur = conn.cursor()
+
+    cur.execute("""
+        INSERT INTO propuestas (usuario, titulo, descripcion)
+        VALUES (%s, %s, %s)
+    """, (usuario, titulo, descripcion))
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return jsonify({"mensaje": "✅ Propuesta enviada correctamente."})
+
+
+# GET → consultar todas las propuestas
+@app.route("/api/propuestas", methods=["GET"])
+def obtener_propuestas():
+    conn = obtener_conexion()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+    cur.execute("SELECT * FROM propuestas;")
+    rows = cur.fetchall()
+
+    propuestas = []
+    for row in rows:
+        propuestas.append({
+            "id": row["id"],
+            "usuario": row["usuario"],
+            "titulo": row["titulo"],
+            "descripcion": row["descripcion"],
+            "fecha": row["fecha"].isoformat() if row["fecha"] else None
+        })
+
+    cur.close()
+    conn.close()
+
+    return jsonify(propuestas)
+
+
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
 

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Propuestas de Movilidad</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+<div class="container mt-5">
+  <h2 class="text-center text-primary mb-4">💡 Propuestas de Movilidad</h2>
+
+  <form id="propuestaForm" class="bg-white p-4 rounded shadow">
+    <div class="mb-3">
+      <label for="usuario" class="form-label">Nombre o alias:</label>
+      <input type="text" id="usuario" class="form-control" required>
+    </div>
+    <div class="mb-3">
+      <label for="titulo" class="form-label">Título de la propuesta:</label>
+      <input type="text" id="titulo" class="form-control" required>
+    </div>
+    <div class="mb-3">
+      <label for="descripcion" class="form-label">Descripción:</label>
+      <textarea id="descripcion" class="form-control" rows="4" required></textarea>
+    </div>
+    <button type="submit" class="btn btn-primary w-100">Enviar Propuesta</button>
+  </form>
+</div>
+
+<script>
+  document.getElementById('propuestaForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const data = {
+      usuario: document.getElementById('usuario').value,
+      titulo: document.getElementById('titulo').value,
+      descripcion: document.getElementById('descripcion').value
+    };
+
+    const response = await fetch('http://localhost:5000/api/propuestas', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(data)
+    });
+
+    const resJson = await response.json();
+    alert(resJson.mensaje);
+
+    document.getElementById('propuestaForm').reset();
+  });
+</script>
+
+</body>
+</html>

@@ -8,7 +8,6 @@
   <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
 
-  <!-- Estilos -->
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -53,7 +52,6 @@
     attribution: '&copy; OpenStreetMap'
   }).addTo(map);
 
-  // Explicaciones por tipo
   const explicaciones = {
     'Buses': 'Problemas con rutas, paraderos mal ubicados o exceso de buses.',
     'Carros': 'Congestión, parqueo indebido o intersecciones saturadas.',
@@ -82,18 +80,16 @@
       <button onclick="guardarReporte(${latlng.lat}, ${latlng.lng})">Guardar Reporte</button>
     `;
 
-    const marker = L.marker(latlng).addTo(map).bindPopup(popupContent).openPopup();
+    L.marker(latlng).addTo(map).bindPopup(popupContent).openPopup();
   });
 
-  // Mostrar explicación del tipo
   window.actualizarExplicacion = function () {
     const tipo = document.getElementById("tipo-problema").value;
     const explicacion = explicaciones[tipo] || '';
     document.getElementById("explicacion").innerText = explicacion;
   };
 
-  // Guardar el reporte
-  window.guardarReporte = function (lat, lng) {
+  window.guardarReporte = async function (lat, lng) {
     const tipo = document.getElementById("tipo-problema").value;
     const comentario = document.getElementById("comentario").value.trim();
 
@@ -102,16 +98,34 @@
       return;
     }
 
-    const contenido = `<b>Tipo:</b> ${tipo}<br><b>Comentario:</b> ${comentario || 'Sin comentario.'}`;
+    const data = {
+      tipo: tipo,
+      comentario: comentario,
+      latitud: lat,
+      longitud: lng
+    };
 
-    const marcadorFinal = L.marker([lat, lng]).addTo(map);
-    marcadorFinal.bindPopup(contenido).openPopup();
+    try {
+      const response = await fetch("http://localhost:5000/api/reportes", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(data)
+      });
 
-    console.log("Reporte guardado:", {
-      tipo,
-      comentario,
-      coordenadas: { lat, lng }
-    });
+      const result = await response.json();
+      alert(result.mensaje);
+
+      const marcadorFinal = L.marker([lat, lng]).addTo(map);
+      marcadorFinal.bindPopup(
+        `<b>Tipo:</b> ${tipo}<br><b>Comentario:</b> ${comentario || 'Sin comentario.'}`
+      ).openPopup();
+
+    } catch (error) {
+      console.error(error);
+      alert("❌ Ocurrió un error al guardar el reporte.");
+    }
   };
 </script>
 

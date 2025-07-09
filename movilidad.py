@@ -31,7 +31,7 @@ def index():
 
 
 # ==========================================
-# ✅ Rutas para SITIOS
+# ✅ RUTAS PARA SITIOS
 # ==========================================
 
 # GET → consultar todos los sitios
@@ -81,11 +81,11 @@ def crear_sitio():
     cur.close()
     conn.close()
 
-    return jsonify({"mensaje": "Sitio creado exitosamente."})
+    return jsonify({"mensaje": "✅ Sitio creado exitosamente."})
 
 
 # ==========================================
-# ✅ Rutas para RUTAS
+# ✅ RUTAS PARA RUTAS
 # ==========================================
 
 # POST → insertar una nueva ruta
@@ -109,7 +109,7 @@ def crear_ruta():
     cur.close()
     conn.close()
 
-    return jsonify({"mensaje": "Ruta guardada correctamente."})
+    return jsonify({"mensaje": "✅ Ruta guardada correctamente."})
 
 
 # GET → consultar todas las rutas
@@ -136,6 +136,63 @@ def obtener_rutas():
     return jsonify(rutas)
 
 
+# ==========================================
+# ✅ RUTAS PARA REPORTES DE PROBLEMAS
+# ==========================================
+
+# POST → insertar un nuevo reporte
+@app.route("/api/reportes", methods=["POST"])
+def crear_reporte():
+    data = request.get_json()
+
+    tipo = data.get("tipo")
+    comentario = data.get("comentario")
+    latitud = data.get("latitud")
+    longitud = data.get("longitud")
+
+    conn = obtener_conexion()
+    cur = conn.cursor()
+
+    cur.execute("""
+        INSERT INTO reportes (tipo, comentario, latitud, longitud)
+        VALUES (%s, %s, %s, %s)
+    """, (tipo, comentario, latitud, longitud))
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return jsonify({"mensaje": "✅ Reporte guardado correctamente."})
+
+
+# GET → consultar todos los reportes
+@app.route("/api/reportes", methods=["GET"])
+def obtener_reportes():
+    conn = obtener_conexion()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+    cur.execute("SELECT * FROM reportes;")
+    rows = cur.fetchall()
+
+    reportes = []
+    for row in rows:
+        reportes.append({
+            "id": row["id"],
+            "tipo": row["tipo"],
+            "comentario": row["comentario"],
+            "latitud": row["latitud"],
+            "longitud": row["longitud"],
+            "fecha": row["fecha"].isoformat() if row["fecha"] else None
+        })
+
+    cur.close()
+    conn.close()
+
+    return jsonify(reportes)
+
+
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
+
+
 
